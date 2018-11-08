@@ -1,0 +1,25 @@
+{
+  "name": "assignment-gis",
+  "version": "1.0.0",
+  "description": "Build a map-based application, which lets the user see geo-based data on a map and filter/search through it in a meaningfull way.",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NonActive/assignment-gis.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NonActive/assignment-gis/issues"
+  },
+  "homepage": "https://github.com/NonActive/assignment-gis#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "path": "^0.12.7"
+  }
+}
