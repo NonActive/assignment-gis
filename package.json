@@ -2,7 +2,6 @@
   "name": "assignment-gis",
   "version": "1.0.0",
   "description": "Build a map-based application, which lets the user see geo-based data on a map and filter/search through it in a meaningfull way.",
-  "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -18,8 +17,12 @@
   },
   "homepage": "https://github.com/NonActive/assignment-gis#readme",
   "dependencies": {
+    "async": "^2.6.1",
+    "bluebird": "^3.5.3",
     "body-parser": "^1.18.3",
     "express": "^4.16.4",
-    "path": "^0.12.7"
+    "morgan": "^1.9.1",
+    "path": "^0.12.7",
+    "pg-promise": "^8.5.2"
   }
 }
