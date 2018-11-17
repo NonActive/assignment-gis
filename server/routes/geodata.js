@@ -1,14 +1,23 @@
 const db = require('../db');
 
-var getPriceMap = ((req, res) => {
-    db.GeodataRepository.get().then((results) => {
+var getNoise = ((req, res) => {
+    db.GeodataRepository.getTest().then((results) => {
+        console.log(results);
+        const data = results[0]['row_to_json'];
 
-        return res.status(200).send(JSON.stringify({
-             'geom': results[0].geom
-        }));
+        return res.status(200).send(data)
+    });
+});
+
+var getPriceMap = ((req, res) => {
+    db.GeodataRepository.getTerritory().then((results) => {
+        const data = results[0];
+
+        return res.status(200).send(data);
     });
 });
 
 module.exports = {
-    getPriceMap
+    getPriceMap,
+    getNoise
 }

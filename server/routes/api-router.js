@@ -1,11 +1,15 @@
 const router = require('express').Router();
 
-const { getPriceMap } = require('./geodata');
+const { 
+    getPriceMap,
+    getNoise,
+ } = require('./geodata');
 
 router
     .get('/', (req, res) => {
         res.status(200).json({message: 'connected!'});
     })
-    .get('/geodata', getPriceMap);
+    .get('/territory', getPriceMap)
+    .get('/noise', getNoise);
 
 module.exports = router

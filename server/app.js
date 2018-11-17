@@ -29,9 +29,6 @@ app.use(function (req, res, next) {
     next(err);
 });
 
-
-
-
 // Initialize the app.
 app.listen(port, () => {
     console.log("App now running on port", port);
