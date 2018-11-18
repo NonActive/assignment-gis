@@ -2,7 +2,7 @@ const ACCESS_TOKEN = 'pk.eyJ1Ijoibm9uYWN0aXZlIiwiYSI6ImNqb2xndnRqcDBvM2czcHFhc3p
 
 const API = 'http://localhost:3000/api';
 const OPENSTREETMAP_API = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const MAPBOX_API ='https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}'
+const MAPBOX_API = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}'
 
 const mapOptions = {
     center: [50.08804, 14.42076],
@@ -27,15 +27,17 @@ let streets = L.tileLayer(MAPBOX_API, {
 map.addLayer(streets);
 
 const layers = {
-    'priceMap': null
+    'price-map': null,
+    'noise-map': null
 }
 
-function getJsonData(dataURL) {
+function getJsonData(dataURL, params) {
     return $.ajax({
         url: dataURL,
         type: 'GET',
         contentType: 'application/json; charset=utf-8',
-        dataType: 'json'
+        dataType: 'json',
+        data: params
     });
 }
 
@@ -58,7 +60,7 @@ for (var i = 0; i < toggleableLayerNames.length; i++) {
             map.removeLayer(clickedLayer);
             this.className = '';
         } else {
-            addLayer();
+            addLayer(clickedLayer, this.textContent);
             this.className = 'active';
         }
     };
@@ -94,42 +96,121 @@ function onEachFeature(feature, layer) {
     });
 }
 
-function addLayer () {
-    if (layers['priceMap']) {
-        map.addLayer(layers['priceMap']);
+function addLayer(layer, layerName) {
+    if (layer) {
+        map.addLayer(layer);
         return;
     }
 
-    getJsonData(`${API}/territory`).then((results) => {
-        layers['priceMap'] = L.geoJSON(results, {
-            style: {
-                color: '#000',
-                fillColor: '#0e0e0e0',
-                fillOpacity: .6
-            },
-            onEachFeature: onEachFeature
-        })
-        map.addLayer(layers['priceMap']);
-    });
+    switch (layerName) {
+        case 'price-map':
+            getJsonData(`${API}/territory`).then((results) => {
+                layer = L.geoJSON(results, {
+                    style: {
+                        color: '#000',
+                        fillColor: '#0e0e0e0',
+                        fillOpacity: .6
+                    },
+                    onEachFeature: onEachFeature
+                });
+
+                layers[layerName] = layer;
+                map.addLayer(layer);
+            });
+            break;
+        case 'noise-map':
+            getJsonData(`${API}/noise-map`).then((results) => {
+                layer = L.geoJSON(results, {
+                    style: {
+                        color: '#000',
+                        fillColor: '#e5e5e5e',
+                        fillOpacity: .6
+                    }
+                });
+
+                layers[layerName] = layer;
+                map.addLayer(layer);
+            });
+            break;
+    }
+
 };
 
+let infoMarker, highlightArea;
 map.on('click', function (e) {
     let lat = e.latlng.lat;
     let lng = e.latlng.lng;
 
-    // setMark(`lat: ${lat} <br> lng: ${lng}`, lat, lng);
 
+    getJsonData(`${API}/point-info`, {
+        point: [lng, lat]
+    }).then((results) => {
+        if (typeof (infoMarker) !== 'undefined') {
+            map.removeLayer(infoMarker);
+        }
 
-    getJsonData(`${API}/noise`).then((results) => {
-        test = L.geoJSON(results, {
-            style: {
-                color: '#000',
-                fillColor: 'green',
-                fillOpacity: .6
+        const properties = results.properties;
+
+        let available;
+        if (_.has(properties, 'zastavitelne')) {
+            available = properties.zastavitelne === 'zastavitelne' ? 'yes' : 'no';
+        }
+
+        let price;
+        if (_.has(properties, 'cena')) {
+            price = properties.cena === null || properties.cena === 'N' ? 'undefined' : `${properties.cena} CZK`
+        }
+
+        let noise;
+        if (_.has(properties, 'noise')) {
+            noise = `${properties.noise} dB`;
+        }
+
+        infoMarker = setMark(
+            `<b>Latitude: ${lat} </b><br>` +
+            `<b>Longitude: ${lng} </b><br>` +
+            `<b>Price (m^2): ${price} </b><br>` +
+            `<b>Noise level: ${noise} </b><br>` +
+            `<b>Available: ${available} </b><br>`,
+            lat, lng
+        );
+
+        if (typeof (highlightArea) !== 'undefined') {
+            map.removeLayer(highlightArea);
+        }
+
+        highlightArea = L.geoJSON(results, {
+            style: function (feature) {
+                const properties = results.properties;
+
+                let fillColor;
+                if (_.has(properties, 'zastavitelne')) {
+                    fillColor = properties.zastavitelne === 'zastavitelne' ? '#00e500' : '#e50000';
+                }
+
+                return {
+                    color: '#000',
+                    fillOpacity: .7,
+                    fillColor: fillColor,
+                }
             }
         })
-        map.addLayer(test);
+        map.addLayer(highlightArea);
     });
+
+
+
+
+    /*     getJsonData(`${API}/noise`).then((results) => {
+            test = L.geoJSON(results, {
+                style: {
+                    color: '#000',
+                    fillColor: 'green',
+                    fillOpacity: .6
+                }
+            })
+            map.addLayer(test);
+        }); */
 
 });
 
@@ -137,6 +218,8 @@ map.on('click', function (e) {
 function setMark(text, lat, lng) {
     let selectedPoint = L.marker([lat, lng]).addTo(map);
     selectedPoint.bindPopup(`<b>${text}.<b/>`).openPopup();
+
+    return selectedPoint;
 }
 
 
