@@ -96,6 +96,33 @@ function onEachFeature(feature, layer) {
     });
 }
 
+function styleNoiseMap(feature) {
+    let noise_level = feature.properties.gridvalue; 
+
+	let color = calculateRedGreen(noise_level, 1, 5);
+
+    return {
+        color: color, 
+        fillColor: color,
+        fillOpacity: 0.5
+    }
+};
+
+function calculateRedGreen(value, min, max){
+    let percent = (value - min) / (max - min);
+    console.log(percent);
+    
+    let portion = Math.floor((255 * 2) * percent);
+
+    return 	portion > 255 ? rgb_str(255, 255 - (portion - 255), 0) : rgb_str(portion, 255, 0);  
+}
+
+function rgb_str(r, g, b)
+{
+    var hexval = 0x1000000 + b + 0x100 * g + 0x10000 *r ;
+    return '#'+hexval.toString(16).substr(1);
+}
+
 function addLayer(layer, layerName) {
     if (layer) {
         map.addLayer(layer);
@@ -121,11 +148,7 @@ function addLayer(layer, layerName) {
         case 'noise-map':
             getJsonData(`${API}/noise-map`).then((results) => {
                 layer = L.geoJSON(results, {
-                    style: {
-                        color: '#000',
-                        fillColor: '#e5e5e5e',
-                        fillOpacity: .6
-                    }
+                    style: styleNoiseMap
                 });
 
                 layers[layerName] = layer;

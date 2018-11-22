@@ -32,7 +32,7 @@ class GeodataRepository {
         }).then(query => {
             return this.db.one(query)
         }).catch(err => {
-            // console.log('DB error: ', err);
+            console.log('DB error: ', err);
             return err;
         });
     }
