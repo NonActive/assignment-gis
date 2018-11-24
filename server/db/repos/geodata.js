@@ -8,6 +8,14 @@ class GeodataRepository {
         this.pgp = pgp;
     }
 
+    getCityZonesOverview() {
+        return sql.initQuery('city.zones').then(query => {
+            return this.db.any(query);
+        }).catch(err => {
+            console.log('DB error: ', err);
+        });;
+    }
+
     getTerritory() {
         return sql.initQuery('territory.area').then(query => {
             return this.db.any(query)

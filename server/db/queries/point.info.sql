@@ -5,7 +5,7 @@ WITH cena AS
   FROM
     cenova_mapa 
   WHERE
-    st_contains( geom_new, st_geomfromtext('POINT(%lng% %lat%)', 4326) ) 
+    ST_Contains( geom_new, st_geomfromtext('POINT(%lng% %lat%)', 4326) ) 
 )
 ,
 noise_level AS 
@@ -15,7 +15,7 @@ noise_level AS
   FROM
     noise_level 
   WHERE
-    st_contains( geom, st_geomfromtext('POINT(%lng% %lat%)', 4326) ) 
+    ST_Contains( geom, st_geomfromtext('POINT(%lng% %lat%)', 4326) ) 
 )
 SELECT
   row_to_json(feature_data) 
@@ -50,6 +50,6 @@ FROM
       FROM
         zastavitelne_uzemi AS zastav_t 
       WHERE
-        st_contains( zastav_t.geom_new, st_geomfromtext('POINT(%lng% %lat%)', 4326) ) 
+        ST_Contains( zastav_t.geom_new, st_geomfromtext('POINT(%lng% %lat%)', 4326) ) 
   )
   AS feature_data

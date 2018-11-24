@@ -17,11 +17,11 @@ map.on('load', function () {
 });
 
 // Base street layer
-let streets = L.tileLayer(MAPBOX_API, {
+let streets = L.tileLayer(OPENSTREETMAP_API, {
     attribution: 'PDT 2018',
     maxZoom: 18,
     id: 'mapbox.streets',
-    accessToken: ACCESS_TOKEN
+    // accessToken: ACCESS_TOKEN
 });
 
 map.addLayer(streets);
@@ -47,7 +47,6 @@ for (var i = 0; i < toggleableLayerNames.length; i++) {
 
     let link = document.createElement('a');
     link.href = '#';
-    link.className = 'active';
     link.textContent = layerName;
 
     link.onclick = function (e) {
@@ -97,30 +96,29 @@ function onEachFeature(feature, layer) {
 }
 
 function styleNoiseMap(feature) {
-    let noise_level = feature.properties.gridvalue; 
+    let noise_level = feature.properties.gridvalue;
 
-	let color = calculateRedGreen(noise_level, 1, 5);
+    let color = calculateRedGreen(noise_level, 1, 5);
 
     return {
-        color: color, 
+        color: color,
         fillColor: color,
         fillOpacity: 0.5
     }
 };
 
-function calculateRedGreen(value, min, max){
+function calculateRedGreen(value, min, max) {
     let percent = (value - min) / (max - min);
     console.log(percent);
-    
+
     let portion = Math.floor((255 * 2) * percent);
 
-    return 	portion > 255 ? rgb_str(255, 255 - (portion - 255), 0) : rgb_str(portion, 255, 0);  
+    return portion > 255 ? rgb_str(255, 255 - (portion - 255), 0) : rgb_str(portion, 255, 0);
 }
 
-function rgb_str(r, g, b)
-{
-    var hexval = 0x1000000 + b + 0x100 * g + 0x10000 *r ;
-    return '#'+hexval.toString(16).substr(1);
+function rgb_str(r, g, b) {
+    var hexval = 0x1000000 + b + 0x100 * g + 0x10000 * r;
+    return '#' + hexval.toString(16).substr(1);
 }
 
 function addLayer(layer, layerName) {
@@ -251,4 +249,34 @@ function setMark(text, lat, lng) {
 $('#menu-toggle').click(function (e) {
     e.preventDefault();
     $('#wrapper').toggleClass('toggled');
+});
+
+$(document).ready(function () {
+    let table = $('#example').DataTable({
+        columns: [
+            { 'data': 'gid' },
+            { 'data': 'name' },
+            { 'data': 'air_quality' },
+            { 'data': 'noise_level' },
+            { 'data': 'price' },
+        ],
+        columnDefs: [
+            { targets: [0], visible: false },
+        ]
+    });
+
+    $('#example_filter input').keyup(function () {
+        table.search(
+            jQuery.fn.DataTable.ext.type.search.string(this.value)
+        ).draw()
+    });
+
+    $('#example tbody').on('click', 'tr', function () {
+        var data = table.row(this).data();
+        console.log(data);
+    });
+
+    getJsonData(`${API}/city-zones`).then((results) => {
+        table.rows.add(results).draw();
+    });
 });

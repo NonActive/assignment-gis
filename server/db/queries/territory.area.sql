@@ -5,7 +5,7 @@ FROM
   (
     SELECT
       'Feature' AS type,
-      st_asgeojson(zastav_t.geom_new)::json AS geometry,
+      ST_AsGeoJSON(zastav_t.geom_new)::json AS geometry,
       row_to_json((
       SELECT
         t 

@@ -1,5 +1,15 @@
 const db = require('../db');
 
+let getCityZonesOverview = ((req, res) => {
+    db.GeodataRepository.getCityZonesOverview().then((results) => {
+        const data = results;
+
+        return res.status(200).send(data)
+    }).catch(err => {
+        return sendError(res, err.message);
+    });
+});
+
 let getNoise = ((req, res) => {
     db.GeodataRepository.getNoise().then((results) => {
         const data = results;
@@ -44,5 +54,6 @@ function sendError(res, err) {
 module.exports = {
     getPriceMap,
     getNoise,
-    getPointInfo
+    getPointInfo,
+    getCityZonesOverview
 }

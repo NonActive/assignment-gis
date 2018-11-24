@@ -13,7 +13,7 @@
 --           SELECT noise.level
 --         )
 --         AS t)) AS properties,
---       st_asgeojson(noise.geom)::json AS geometry 
+--       ST_AsGeoJSON(noise.geom)::json AS geometry 
 --     FROM
 --       noise_level AS noise
 --   )
@@ -34,7 +34,7 @@ FROM
           SELECT bonita_klimatu.gridvalue
         )
         AS t)) AS properties,
-      st_asgeojson(bonita_klimatu.geom)::json AS geometry 
+      ST_AsGeoJSON(bonita_klimatu.geom)::json AS geometry 
     FROM
       bonita_klimatu_mapa AS bonita_klimatu
   )

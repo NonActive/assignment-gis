@@ -3,7 +3,8 @@ const router = require('express').Router();
 const { 
     getPriceMap,
     getNoise,
-    getPointInfo
+    getPointInfo,
+    getCityZonesOverview
  } = require('./geodata');
 
 router
@@ -12,6 +13,7 @@ router
     })
     .get('/territory', getPriceMap)
     .get('/noise-map', getNoise)
+    .get('/city-zones', getCityZonesOverview)
     .get('/point-info', getPointInfo);
 
 module.exports = router
