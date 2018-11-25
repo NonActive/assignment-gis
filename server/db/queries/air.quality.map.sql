@@ -1,10 +1,10 @@
-WITH noise_max_min AS 
+WITH bonita_max_min AS 
 (
   SELECT
-    MIN(noise.level),
-    MAX(noise.level) 
+    MIN(bk.gridvalue),
+    MAX(bk.gridvalue) 
   FROM
-    noise_level AS noise 
+    bonita_klimatu_mapa AS bk 
 )
 SELECT
   'FeatureCollection' AS type,
@@ -19,24 +19,24 @@ FROM
       FROM
         (
           SELECT
-            noise.level,
+            bk.gridvalue,
             (
               SELECT
                 min 
               FROM
-                noise_max_min
+                bonita_max_min
             )
 ,
             (
               SELECT
                 max 
               FROM
-                noise_max_min
+                bonita_max_min
             )
         )
         AS t)) AS properties,
-        ST_AsGeoJSON(noise.geom)::json AS geometry 
+        ST_AsGeoJSON(bk.geom)::json AS geometry 
       FROM
-        noise_level AS noise 
+        bonita_klimatu_mapa AS bk 
   )
   AS features_data

@@ -17,18 +17,28 @@ map.on('load', function () {
 });
 
 // Base street layer
-let streets = L.tileLayer(OPENSTREETMAP_API, {
+let streets = L.tileLayer(MAPBOX_API, {
     attribution: 'PDT 2018',
     maxZoom: 18,
     id: 'mapbox.streets',
-    // accessToken: ACCESS_TOKEN
+    accessToken: ACCESS_TOKEN
 });
 
 map.addLayer(streets);
 
-const layers = {
+let layers = {
     'price-map': null,
+    'air-quality': null,
+    'traffic-nosise-map': null, 
     'noise-map': null
+}
+
+let cityZoneLayer;
+
+function removeLayer(layer) {
+    if (typeof (layer) !== 'undefined') {
+        map.removeLayer(layer);
+    }
 }
 
 function getJsonData(dataURL, params) {
@@ -96,9 +106,41 @@ function onEachFeature(feature, layer) {
 }
 
 function styleNoiseMap(feature) {
-    let noise_level = feature.properties.gridvalue;
+    let noiseLevel = feature.properties.level;
+    const min = feature.properties.min;
+    const max = feature.properties.max;
+    console.log(feature);
 
-    let color = calculateRedGreen(noise_level, 1, 5);
+    let color = calculateRedGreen(noiseLevel, min, max);
+
+    return {
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.5
+    }
+};
+
+function styleAirQualityMap(feature) {
+    const gridlevel = feature.properties.gridvalue;
+    const min = feature.properties.min;
+    const max = feature.properties.max;
+
+    let color = calculateRedGreen(gridlevel, min, max);
+
+    return {
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.5
+    }
+};
+
+function stylePriceMap(feature) {
+    const price = feature.properties.price !== 'N' ? +feature.properties.price : null;
+    console.log(feature.properties.price);
+    const min = feature.properties.min;
+    const max = feature.properties.max;
+
+    let color = calculateRedGreen(price, min, max);
 
     return {
         color: color,
@@ -109,7 +151,6 @@ function styleNoiseMap(feature) {
 
 function calculateRedGreen(value, min, max) {
     let percent = (value - min) / (max - min);
-    console.log(percent);
 
     let portion = Math.floor((255 * 2) * percent);
 
@@ -129,14 +170,9 @@ function addLayer(layer, layerName) {
 
     switch (layerName) {
         case 'price-map':
-            getJsonData(`${API}/territory`).then((results) => {
+            getJsonData(`${API}/price-map`).then((results) => {
                 layer = L.geoJSON(results, {
-                    style: {
-                        color: '#000',
-                        fillColor: '#0e0e0e0',
-                        fillOpacity: .6
-                    },
-                    onEachFeature: onEachFeature
+                    style: stylePriceMap
                 });
 
                 layers[layerName] = layer;
@@ -147,6 +183,16 @@ function addLayer(layer, layerName) {
             getJsonData(`${API}/noise-map`).then((results) => {
                 layer = L.geoJSON(results, {
                     style: styleNoiseMap
+                });
+
+                layers[layerName] = layer;
+                map.addLayer(layer);
+            });
+            break;
+        case 'air-quality':
+            getJsonData(`${API}/air-quality`).then((results) => {
+                layer = L.geoJSON(results, {
+                    style: styleAirQualityMap
                 });
 
                 layers[layerName] = layer;
@@ -166,9 +212,7 @@ map.on('click', function (e) {
     getJsonData(`${API}/point-info`, {
         point: [lng, lat]
     }).then((results) => {
-        if (typeof (infoMarker) !== 'undefined') {
-            map.removeLayer(infoMarker);
-        }
+        removeLayer(infoMarker);
 
         const properties = results.properties;
 
@@ -243,16 +287,21 @@ function setMark(text, lat, lng) {
     return selectedPoint;
 }
 
-
-
-
-$('#menu-toggle').click(function (e) {
+$('#menu-toggle').on('click', function (e) {
     e.preventDefault();
     $('#wrapper').toggleClass('toggled');
 });
 
+$('#clear-button').on('click', function (e) {
+    e.preventDefault();
+    removeLayer(infoMarker);
+    removeLayer(highlightArea);
+});
+
+
+
 $(document).ready(function () {
-    let table = $('#example').DataTable({
+    let table = $('#cityZonesTable').DataTable({
         columns: [
             { 'data': 'gid' },
             { 'data': 'name' },
@@ -271,12 +320,39 @@ $(document).ready(function () {
         ).draw()
     });
 
-    $('#example tbody').on('click', 'tr', function () {
+    $('#cityZonesTable tbody').on('click', 'tr', function () {
         var data = table.row(this).data();
-        console.log(data);
+
+        // hide modal on select
+        $('#cityZonesModal').modal('hide');
+
+        removeLayer(cityZoneLayer);
+
+        let zoneId = data.gid;
+        getJsonData(`${API}/city-zone/${zoneId}`).then((results) => {
+            cityZoneLayer = L.geoJSON(results, {
+                style: {
+                    color: '#CC0000',
+                    fillColor: '#C9C9C9',
+                    fillOpacity: .8
+                },
+                onEachFeature: function (feature, layer) {
+                    layer.bindTooltip(feature.properties.name, {
+                        permanent: true, 
+                        direction: 'top'
+                    });
+                }
+            });
+            map.addLayer(cityZoneLayer);
+        });
     });
 
-    getJsonData(`${API}/city-zones`).then((results) => {
+    $('#remove-zone').on('click', function (e) {
+        e.preventDefault();
+        removeLayer(cityZoneLayer);
+    });
+
+    getJsonData(`${API}/city-zone`).then((results) => {
         table.rows.add(results).draw();
     });
 });

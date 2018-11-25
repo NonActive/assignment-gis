@@ -1,10 +1,12 @@
-WITH noise_max_min AS 
+WITH price_max_min AS 
 (
   SELECT
-    MIN(noise.level),
-    MAX(noise.level) 
+    MIN(cm.cena::integer),
+    MAX(cm.cena::integer) 
   FROM
-    noise_level AS noise 
+    cenova_mapa AS cm 
+  WHERE
+    cm.cena NOT LIKE 'N' 
 )
 SELECT
   'FeatureCollection' AS type,
@@ -19,24 +21,32 @@ FROM
       FROM
         (
           SELECT
-            noise.level,
+            cm.cena AS price,
             (
               SELECT
                 min 
               FROM
-                noise_max_min
+                price_max_min
             )
 ,
             (
               SELECT
                 max 
               FROM
-                noise_max_min
+                price_max_min
             )
         )
         AS t)) AS properties,
-        ST_AsGeoJSON(noise.geom)::json AS geometry 
+        ST_AsGeoJSON(cm.geom_new)::json AS geometry 
       FROM
-        noise_level AS noise 
+        cenova_mapa AS cm 
+      WHERE
+        ST_Intersects((
+        SELECT
+          geom_new 
+        FROM
+          mestske_casti AS mc 
+        WHERE
+          mc.gid = 7), cm.geom_new) 
   )
   AS features_data

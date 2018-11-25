@@ -16,6 +16,17 @@ class GeodataRepository {
         });;
     }
 
+    getCityZone(zoneId) {
+        return sql.initQuery('city.zone.detail', {
+            zoneId: zoneId
+        }).then(query => {
+            return this.db.one(query)
+        }).catch(err => {
+            console.log('DB error: ', err);
+            return err;
+        });
+    }
+
     getTerritory() {
         return sql.initQuery('territory.area').then(query => {
             return this.db.any(query)
@@ -26,6 +37,25 @@ class GeodataRepository {
 
     getNoise() {
         return sql.initQuery('noise.map').then(query => {
+            return this.db.one(query)
+        }).catch(err => {
+            console.log('DB error: ', err);
+            return err;
+        });
+    }
+
+    getAirQuality() {
+        return sql.initQuery('air.quality.map').then(query => {
+            return this.db.one(query)
+        }).catch(err => {
+            console.log('DB error: ', err);
+            return err;
+        });
+    }
+
+
+    getPriceMap() {
+        return sql.initQuery('price.map').then(query => {
             return this.db.one(query)
         }).catch(err => {
             console.log('DB error: ', err);

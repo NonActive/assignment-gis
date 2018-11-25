@@ -10,8 +10,40 @@ let getCityZonesOverview = ((req, res) => {
     });
 });
 
+let getCityZoneById = ((req, res) => {
+    const zoneId = req.params.id;
+    
+    db.GeodataRepository.getCityZone(zoneId).then((results) => {
+        const data = results;
+
+        return res.status(200).send(data)
+    }).catch(err => {
+        return sendError(res, err.message);
+    });
+});
+
 let getNoise = ((req, res) => {
     db.GeodataRepository.getNoise().then((results) => {
+        const data = results;
+
+        return res.status(200).send(data)
+    }).catch(err => {
+        return sendError(res, err.message);
+    });
+});
+
+let getAirQuality = ((req, res) => {
+    db.GeodataRepository.getAirQuality().then((results) => {
+        const data = results;
+
+        return res.status(200).send(data)
+    }).catch(err => {
+        return sendError(res, err.message);
+    });
+});
+
+let getPriceMap = ((req, res) => {
+    db.GeodataRepository.getPriceMap().then((results) => {
         const data = results;
 
         return res.status(200).send(data)
@@ -36,14 +68,6 @@ let getPointInfo = ((req, res) => {
     });
 });
 
-let getPriceMap = ((req, res) => {
-    db.GeodataRepository.getTerritory().then((results) => {
-        const data = results[0];
-
-        return res.status(200).send(data);
-    });
-});
-
 function sendError(res, err) {
     return res.status(500).send({
         status: 500,
@@ -52,8 +76,10 @@ function sendError(res, err) {
 };
 
 module.exports = {
-    getPriceMap,
     getNoise,
     getPointInfo,
-    getCityZonesOverview
+    getPriceMap,
+    getCityZonesOverview,
+    getCityZoneById,
+    getAirQuality
 }

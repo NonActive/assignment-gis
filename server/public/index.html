@@ -31,7 +31,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" data-toggle="modal" data-target="#cityZonesModal">Dashboard</a>
+                    <a href="#" data-toggle="modal" data-target="#cityZonesModal">City Zones</a>
+                    <a href="#" id="remove-zone">Remove zone</a>
                 </li>
             </ul>
         </div>
@@ -43,6 +44,7 @@
                 <div class="map-wrapper">
                     <nav id="menu"></nav>
                     <div id='map'></div>
+                    <button id="clear-button" type="button" class="btn btn-dark">Clear marker</button>
                 </div>
 
                 <!-- <a href="#menu-toggle" class="btn btn-secondary" id="menu-toggle">Toggle Menu</a> -->
@@ -66,7 +68,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <table id="example" class="display" style="width:100%">
+                    <table id="cityZonesTable" class="display" style="width:100%">
                         <thead>
                             <tr>
                                 <th>gid</th>

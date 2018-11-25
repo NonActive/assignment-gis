@@ -1,19 +1,23 @@
 const router = require('express').Router();
 
 const { 
-    getPriceMap,
     getNoise,
+    getAirQuality,
+    getPriceMap,
     getPointInfo,
-    getCityZonesOverview
+    getCityZonesOverview,
+    getCityZoneById
  } = require('./geodata');
 
 router
     .get('/', (req, res) => {
         res.status(200).json({message: 'connected!'});
     })
-    .get('/territory', getPriceMap)
     .get('/noise-map', getNoise)
-    .get('/city-zones', getCityZonesOverview)
+    .get('/air-quality', getAirQuality)
+    .get('/price-map', getPriceMap)
+    .get('/city-zone', getCityZonesOverview)
+    .get('/city-zone/:id', getCityZoneById)
     .get('/point-info', getPointInfo);
 
 module.exports = router
