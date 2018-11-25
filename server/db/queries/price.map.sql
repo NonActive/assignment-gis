@@ -47,6 +47,6 @@ FROM
         FROM
           mestske_casti AS mc 
         WHERE
-          mc.gid = 7), cm.geom_new) 
+          mc.gid = %zoneId%), cm.geom_new) 
   )
   AS features_data

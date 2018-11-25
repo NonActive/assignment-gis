@@ -54,8 +54,10 @@ class GeodataRepository {
     }
 
 
-    getPriceMap() {
-        return sql.initQuery('price.map').then(query => {
+    getPriceMap(zoneId) {
+        return sql.initQuery('price.map', {
+            zoneId: zoneId
+        }).then(query => {
             return this.db.one(query)
         }).catch(err => {
             console.log('DB error: ', err);

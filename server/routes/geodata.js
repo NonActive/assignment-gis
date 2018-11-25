@@ -43,7 +43,9 @@ let getAirQuality = ((req, res) => {
 });
 
 let getPriceMap = ((req, res) => {
-    db.GeodataRepository.getPriceMap().then((results) => {
+    const zoneId = req.params.id;
+
+    db.GeodataRepository.getPriceMap(zoneId).then((results) => {
         const data = results;
 
         return res.status(200).send(data)

@@ -27,13 +27,12 @@ let streets = L.tileLayer(MAPBOX_API, {
 map.addLayer(streets);
 
 let layers = {
-    'price-map': null,
     'air-quality': null,
-    'traffic-nosise-map': null, 
+    // 'traffic-nosise-map': null, 
     'noise-map': null
 }
 
-let cityZoneLayer;
+let cityZoneLayer, priceMapLayer;
 
 function removeLayer(layer) {
     if (typeof (layer) !== 'undefined') {
@@ -50,6 +49,8 @@ function getJsonData(dataURL, params) {
         data: params
     });
 }
+
+let priceMapBtn = $('#show-price-map');
 
 let toggleableLayerNames = _.keys(layers);
 for (var i = 0; i < toggleableLayerNames.length; i++) {
@@ -80,7 +81,6 @@ for (var i = 0; i < toggleableLayerNames.length; i++) {
 
 // function to build the HTML for the summary label using the selected feature's "name" property
 function buildSummaryLabel(currentFeature) {
-    console.log(currentFeature);
     var featureName = 'Unnamed feature';
     document.getElementById('summaryLabel').innerHTML = '<p style="font-size:18px"><b>' + featureName + '</b></p>';
 }
@@ -109,7 +109,6 @@ function styleNoiseMap(feature) {
     let noiseLevel = feature.properties.level;
     const min = feature.properties.min;
     const max = feature.properties.max;
-    console.log(feature);
 
     let color = calculateRedGreen(noiseLevel, min, max);
 
@@ -119,6 +118,10 @@ function styleNoiseMap(feature) {
         fillOpacity: 0.5
     }
 };
+
+function onEachFeatureNoise(feature, layer){
+    layer.bindPopup(`<b>Noise level: </b>${feature.properties.level} dB`);
+}
 
 function styleAirQualityMap(feature) {
     const gridlevel = feature.properties.gridvalue;
@@ -134,9 +137,12 @@ function styleAirQualityMap(feature) {
     }
 };
 
+function onEachFeatureAirQuality(feature, layer){
+    layer.bindPopup(`<b>Level of air quality (lower number is better): </b>${feature.properties.gridvalue}`);
+}
+
 function stylePriceMap(feature) {
     const price = feature.properties.price !== 'N' ? +feature.properties.price : null;
-    console.log(feature.properties.price);
     const min = feature.properties.min;
     const max = feature.properties.max;
 
@@ -148,6 +154,10 @@ function stylePriceMap(feature) {
         fillOpacity: 0.5
     }
 };
+
+function onEachFeaturePrice(feature, layer){
+    layer.bindPopup(`<b>Price for m&sup2; </b>${feature.properties.price} CZK`);
+}
 
 function calculateRedGreen(value, min, max) {
     let percent = (value - min) / (max - min);
@@ -169,20 +179,12 @@ function addLayer(layer, layerName) {
     }
 
     switch (layerName) {
-        case 'price-map':
-            getJsonData(`${API}/price-map`).then((results) => {
-                layer = L.geoJSON(results, {
-                    style: stylePriceMap
-                });
 
-                layers[layerName] = layer;
-                map.addLayer(layer);
-            });
-            break;
         case 'noise-map':
             getJsonData(`${API}/noise-map`).then((results) => {
                 layer = L.geoJSON(results, {
-                    style: styleNoiseMap
+                    style: styleNoiseMap,
+                    onEachFeature: onEachFeatureNoise
                 });
 
                 layers[layerName] = layer;
@@ -192,7 +194,8 @@ function addLayer(layer, layerName) {
         case 'air-quality':
             getJsonData(`${API}/air-quality`).then((results) => {
                 layer = L.geoJSON(results, {
-                    style: styleAirQualityMap
+                    style: styleAirQualityMap,
+                    onEachFeature: onEachFeatureAirQuality
                 });
 
                 layers[layerName] = layer;
@@ -262,21 +265,6 @@ map.on('click', function (e) {
         })
         map.addLayer(highlightArea);
     });
-
-
-
-
-    /*     getJsonData(`${API}/noise`).then((results) => {
-            test = L.geoJSON(results, {
-                style: {
-                    color: '#000',
-                    fillColor: 'green',
-                    fillOpacity: .6
-                }
-            })
-            map.addLayer(test);
-        }); */
-
 });
 
 
@@ -297,6 +285,31 @@ $('#clear-button').on('click', function (e) {
     removeLayer(infoMarker);
     removeLayer(highlightArea);
 });
+
+
+$('#show-price-map').on('click', function (e) {
+    e.preventDefault();
+    if (map.hasLayer(cityZoneLayer)) {
+        if (map.hasLayer(priceMapLayer)) {
+            priceMapBtn.find('a:first').removeClass('active');
+            removeLayer(priceMapLayer);
+            return;
+        }
+
+        priceMapBtn.find('a:first').addClass('active');
+        let zoneId = priceMapBtn.data('gid');
+
+        getJsonData(`${API}/price-map/${zoneId}`).then((results) => {
+            priceMapLayer = L.geoJSON(results, {
+                style: stylePriceMap,
+                onEachFeature: onEachFeaturePrice
+            });
+
+            map.addLayer(priceMapLayer);
+        });
+    }
+});
+
 
 
 
@@ -337,19 +350,29 @@ $(document).ready(function () {
                     fillOpacity: .8
                 },
                 onEachFeature: function (feature, layer) {
+                    let center = layer.getBounds().getCenter();
+                    map.setView(center, 13);
+
                     layer.bindTooltip(feature.properties.name, {
-                        permanent: true, 
+                        permanent: true,
                         direction: 'top'
                     });
                 }
             });
             map.addLayer(cityZoneLayer);
+
+            priceMapBtn.data('gid', zoneId);
+            priceMapBtn.show(); // show price map option
         });
     });
 
     $('#remove-zone').on('click', function (e) {
         e.preventDefault();
         removeLayer(cityZoneLayer);
+        removeLayer(priceMapLayer);
+
+        priceMapBtn.hide();
+        priceMapBtn.find('a:first').removeClass('active');
     });
 
     getJsonData(`${API}/city-zone`).then((results) => {

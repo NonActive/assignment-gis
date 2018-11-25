@@ -15,7 +15,7 @@ router
     })
     .get('/noise-map', getNoise)
     .get('/air-quality', getAirQuality)
-    .get('/price-map', getPriceMap)
+    .get('/price-map/:id', getPriceMap)
     .get('/city-zone', getCityZonesOverview)
     .get('/city-zone/:id', getCityZoneById)
     .get('/point-info', getPointInfo);
