@@ -76,6 +76,19 @@ class GeodataRepository {
             return err;
         });
     }
+
+    findParkingWithinDistance(point, distance) {
+        return sql.initQuery('find.parking', {
+            lng: point[0],
+            lat: point[1],
+            distance
+        }).then(query => {
+            return this.db.one(query)
+        }).catch(err => {
+            console.log('DB error: ', err);
+            return err;
+        });
+    }
 }
 
 module.exports = GeodataRepository;

@@ -1,3 +1,5 @@
+'use strict'
+
 const db = require('../db');
 
 let getCityZonesOverview = ((req, res) => {
@@ -63,8 +65,13 @@ let getPointInfo = ((req, res) => {
         if (!results['row_to_json'])
             return res.status(200).send(results)
 
-        data = results['row_to_json'];
-        return res.status(200).send(data)
+        data['point-info'] = results['row_to_json'];
+
+        db.GeodataRepository.findParkingWithinDistance(point, 500).then(results => {
+            data['parking'] = results;
+
+            return res.status(200).send(data);
+        })
     }).catch(err => {
         return sendError(res, err.message);
     });

@@ -119,7 +119,7 @@ function styleNoiseMap(feature) {
     }
 };
 
-function onEachFeatureNoise(feature, layer){
+function onEachFeatureNoise(feature, layer) {
     layer.bindPopup(`<b>Noise level: </b>${feature.properties.level} dB`);
 }
 
@@ -137,7 +137,7 @@ function styleAirQualityMap(feature) {
     }
 };
 
-function onEachFeatureAirQuality(feature, layer){
+function onEachFeatureAirQuality(feature, layer) {
     layer.bindPopup(`<b>Level of air quality (lower number is better): </b>${feature.properties.gridvalue}`);
 }
 
@@ -155,7 +155,7 @@ function stylePriceMap(feature) {
     }
 };
 
-function onEachFeaturePrice(feature, layer){
+function onEachFeaturePrice(feature, layer) {
     layer.bindPopup(`<b>Price for m&sup2; </b>${feature.properties.price} CZK`);
 }
 
@@ -207,6 +207,7 @@ function addLayer(layer, layerName) {
 };
 
 let infoMarker, highlightArea;
+let parkingLayer, radiusLayer;
 map.on('click', function (e) {
     let lat = e.latlng.lat;
     let lng = e.latlng.lng;
@@ -215,9 +216,30 @@ map.on('click', function (e) {
     getJsonData(`${API}/point-info`, {
         point: [lng, lat]
     }).then((results) => {
+        removeLayer(parkingLayer);
         removeLayer(infoMarker);
+        removeLayer(radiusLayer);
+        removeLayer(highlightArea);
 
-        const properties = results.properties;
+        const pointInfo = results['point-info'];
+        if (!pointInfo) {
+            return;
+        }
+
+        radiusLayer = L.circle([lat, lng], {
+            color: 'red',
+            fillColor: '#f03',
+            fillOpacity: 0.2,
+            radius: 500
+        }).addTo(map);
+
+        const parking = results['parking'];
+        if (parking && parking.features !== null) {
+            parkingLayer = L.geoJSON(parking)
+            map.addLayer(parkingLayer);
+        }
+
+        const properties = pointInfo.properties;
 
         let available;
         if (_.has(properties, 'zastavitelne')) {
@@ -235,21 +257,17 @@ map.on('click', function (e) {
         }
 
         infoMarker = setMark(
-            `<b>Latitude: ${lat} </b><br>` +
-            `<b>Longitude: ${lng} </b><br>` +
-            `<b>Price (m^2): ${price} </b><br>` +
-            `<b>Noise level: ${noise} </b><br>` +
-            `<b>Available: ${available} </b><br>`,
+            `<b>Latitude:</b> ${lat} <br>` +
+            `<b>Longitude: </b> ${lng}<br>` +
+            `<b>Price (m^2):</b> ${price} <br>` +
+            `<b>Noise level:</b> ${noise} <br>` +
+            `<b>Available:</b> ${available} <br>`,
             lat, lng
         );
 
-        if (typeof (highlightArea) !== 'undefined') {
-            map.removeLayer(highlightArea);
-        }
-
-        highlightArea = L.geoJSON(results, {
+        highlightArea = L.geoJSON(pointInfo, {
             style: function (feature) {
-                const properties = results.properties;
+                const properties = pointInfo.properties;
 
                 let fillColor;
                 if (_.has(properties, 'zastavitelne')) {
@@ -258,7 +276,7 @@ map.on('click', function (e) {
 
                 return {
                     color: '#000',
-                    fillOpacity: .7,
+                    fillOpacity: .4,
                     fillColor: fillColor,
                 }
             }
@@ -269,8 +287,21 @@ map.on('click', function (e) {
 
 
 function setMark(text, lat, lng) {
-    let selectedPoint = L.marker([lat, lng]).addTo(map);
-    selectedPoint.bindPopup(`<b>${text}.<b/>`).openPopup();
+    const properties = {
+        radius: 3.5,
+        fillColor: 'red',
+        color: "#000",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
+    };
+
+
+    let selectedPoint = L.circleMarker([lat, lng], properties).addTo(map);
+    selectedPoint.bindTooltip(`${text}`, {
+        permanent: true,
+        direction: 'top'
+    }).openPopup();
 
     return selectedPoint;
 }
@@ -282,7 +313,9 @@ $('#menu-toggle').on('click', function (e) {
 
 $('#clear-button').on('click', function (e) {
     e.preventDefault();
+    removeLayer(parkingLayer);
     removeLayer(infoMarker);
+    removeLayer(radiusLayer);
     removeLayer(highlightArea);
 });
 

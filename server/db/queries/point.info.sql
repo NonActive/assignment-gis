@@ -50,6 +50,6 @@ FROM
       FROM
         zastavitelne_uzemi AS zastav_t 
       WHERE
-        ST_Contains( zastav_t.geom_new, st_geomfromtext('POINT(%lng% %lat%)', 4326) ) 
+        ST_Contains( zastav_t.geom_new, ST_GeomFromText('POINT(%lng% %lat%)', 4326) ) 
   )
   AS feature_data
