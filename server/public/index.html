@@ -44,8 +44,13 @@
                 <div class="map-wrapper">
                     <nav id="menu"></nav>
                     <div id="map"></div>
+                    <div class="map-legend">
+                        <span class="min"></span>
+                        <canvas width="200" height="25" id="color-box"></canvas>
+                        <span class="max"></span>
+                    </div>
                     <nav id="show-price-map">
-                        <a id="test"href="#">price-map</a>
+                        <a id="test" href="#">price-map</a>
                     </nav>
                     <button id="clear-button" type="button" class="btn btn-dark">Clear marker</button>
                 </div>
@@ -78,7 +83,7 @@
                                 <th>Name</th>
                                 <th>Air quality</th>
                                 <th>Noise level (dB)</th>
-                                <th>Price/m2 (CZK)</th>
+                                <th>Price for m&sup2; (&euro;)</th>
 
                             </tr>
                         </thead>

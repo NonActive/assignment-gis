@@ -12,10 +12,6 @@ const mapOptions = {
 // Creating a map object
 let map = L.map('map', mapOptions);
 
-map.on('load', function () {
-    console.log('sevas');
-});
-
 // Base street layer
 let streets = L.tileLayer(MAPBOX_API, {
     attribution: 'PDT 2018',
@@ -50,6 +46,11 @@ function getJsonData(dataURL, params) {
     });
 }
 
+// color-box
+let colorBox  = document.getElementById('color-box'),
+    ctx = colorBox.getContext('2d');
+
+// button shows a price map
 let priceMapBtn = $('#show-price-map');
 
 let toggleableLayerNames = _.keys(layers);
@@ -69,6 +70,8 @@ for (var i = 0; i < toggleableLayerNames.length; i++) {
         if (map.hasLayer(clickedLayer)) {
             map.removeLayer(clickedLayer);
             this.className = '';
+
+            $('.map-legend').css('display', 'none');
         } else {
             addLayer(clickedLayer, this.textContent);
             this.className = 'active';
@@ -77,32 +80,6 @@ for (var i = 0; i < toggleableLayerNames.length; i++) {
 
     var layersMenu = document.getElementById('menu');
     layersMenu.appendChild(link);
-}
-
-// function to build the HTML for the summary label using the selected feature's "name" property
-function buildSummaryLabel(currentFeature) {
-    var featureName = 'Unnamed feature';
-    document.getElementById('summaryLabel').innerHTML = '<p style="font-size:18px"><b>' + featureName + '</b></p>';
-}
-
-function onEachFeature(feature, layer) {
-    //bind click
-    layer.on({
-        click: function (e) {
-            let lat = e.latlng.lat;
-            let lng = e.latlng.lng;
-
-            console.log('Lat: ', lat);
-            console.log('Lng: ', lng);
-
-            e.target.setStyle({
-                fillColor: 'red'
-            });
-
-            // Insert some HTML with the feature name
-            buildSummaryLabel(feature);
-        }
-    });
 }
 
 function styleNoiseMap(feature) {
@@ -142,7 +119,7 @@ function onEachFeatureAirQuality(feature, layer) {
 }
 
 function stylePriceMap(feature) {
-    const price = feature.properties.price !== 'N' ? +feature.properties.price : null;
+    const price = feature.properties.price !== 'N' ? Math.floor(+feature.properties.price) : null;
     const min = feature.properties.min;
     const max = feature.properties.max;
 
@@ -156,7 +133,7 @@ function stylePriceMap(feature) {
 };
 
 function onEachFeaturePrice(feature, layer) {
-    layer.bindPopup(`<b>Price for m&sup2; </b>${feature.properties.price} CZK`);
+    layer.bindPopup(`<b>Price for m&sup2; </b>${feature.properties.price} &euro;`);
 }
 
 function calculateRedGreen(value, min, max) {
@@ -172,20 +149,23 @@ function rgb_str(r, g, b) {
     return '#' + hexval.toString(16).substr(1);
 }
 
+
+let noiseMapLegend, airQualityMapLegend;
 function addLayer(layer, layerName) {
-    if (layer) {
-        map.addLayer(layer);
-        return;
-    }
-
     switch (layerName) {
-
         case 'noise-map':
             getJsonData(`${API}/noise-map`).then((results) => {
                 layer = L.geoJSON(results, {
                     style: styleNoiseMap,
                     onEachFeature: onEachFeatureNoise
                 });
+
+                if (results.features) {
+                    let min = results.features[0].properties.min;
+                    let max = results.features[0].properties.max;
+
+                    noiseMapLegend = createMapLegend(min, max);
+                }
 
                 layers[layerName] = layer;
                 map.addLayer(layer);
@@ -197,6 +177,13 @@ function addLayer(layer, layerName) {
                     style: styleAirQualityMap,
                     onEachFeature: onEachFeatureAirQuality
                 });
+
+                if (results.features) {
+                    let min = results.features[0].properties.min;
+                    let max = results.features[0].properties.max;
+
+                    airQualityMapLegend = createMapLegend(min, max);
+                }
 
                 layers[layerName] = layer;
                 map.addLayer(layer);
@@ -216,7 +203,6 @@ map.on('click', function (e) {
     getJsonData(`${API}/point-info`, {
         point: [lng, lat]
     }).then((results) => {
-        removeLayer(parkingLayer);
         removeLayer(infoMarker);
         removeLayer(radiusLayer);
         removeLayer(highlightArea);
@@ -224,19 +210,6 @@ map.on('click', function (e) {
         const pointInfo = results['point-info'];
         if (!pointInfo) {
             return;
-        }
-
-        radiusLayer = L.circle([lat, lng], {
-            color: 'red',
-            fillColor: '#f03',
-            fillOpacity: 0.2,
-            radius: 500
-        }).addTo(map);
-
-        const parking = results['parking'];
-        if (parking && parking.features !== null) {
-            parkingLayer = L.geoJSON(parking)
-            map.addLayer(parkingLayer);
         }
 
         const properties = pointInfo.properties;
@@ -247,21 +220,41 @@ map.on('click', function (e) {
         }
 
         let price;
-        if (_.has(properties, 'cena')) {
-            price = properties.cena === null || properties.cena === 'N' ? 'undefined' : `${properties.cena} CZK`
+        if (_.has(properties, 'price')) {
+            price = properties.price === null || properties.price === 'N' ? 'undefined' : `${properties.price} &euro;`
         }
 
         let noise;
         if (_.has(properties, 'noise')) {
             noise = `${properties.noise} dB`;
         }
+        
+        let areas = '';
+        if (results.parks && results.parks.length > 0) {
+            radiusLayer = L.circle([lat, lng], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.2,
+                radius: 500
+            }).addTo(map);
+    
+            let parks = results.parks;
+
+            areas += '<div class="horizontal-line"></div>' +
+                '<h6>You can find near you:</h6>';
+            
+            for (let i = 0; i < parks.length; i++) {
+                areas +=  `<b>${parks[i].type}:</b> ${parks[i].count} <br>`;
+            } 
+        }
 
         infoMarker = setMark(
+            `<h6>Information</h6>` +
             `<b>Latitude:</b> ${lat} <br>` +
             `<b>Longitude: </b> ${lng}<br>` +
-            `<b>Price (m^2):</b> ${price} <br>` +
+            `<b>Price for m&sup2;:</b> ${price} <br>` +
             `<b>Noise level:</b> ${noise} <br>` +
-            `<b>Available:</b> ${available} <br>`,
+            `<b>Available:</b> ${available} <br>` + areas,
             lat, lng
         );
 
@@ -288,7 +281,7 @@ map.on('click', function (e) {
 
 function setMark(text, lat, lng) {
     const properties = {
-        radius: 3.5,
+        radius: 8.5,
         fillColor: 'red',
         color: "#000",
         weight: 1,
@@ -298,10 +291,12 @@ function setMark(text, lat, lng) {
 
 
     let selectedPoint = L.circleMarker([lat, lng], properties).addTo(map);
-    selectedPoint.bindTooltip(`${text}`, {
-        permanent: true,
-        direction: 'top'
-    }).openPopup();
+    // selectedPoint.bindTooltip(`${text}`, {
+    //     permanent: true,
+    //     direction: 'top'
+    // }).openPopup();
+    selectedPoint.bindPopup(`${text}`).openPopup();
+
 
     return selectedPoint;
 }
@@ -396,6 +391,8 @@ $(document).ready(function () {
 
             priceMapBtn.data('gid', zoneId);
             priceMapBtn.show(); // show price map option
+
+            $('#remove-zone').css('display', 'block');
         });
     });
 
@@ -406,9 +403,33 @@ $(document).ready(function () {
 
         priceMapBtn.hide();
         priceMapBtn.find('a:first').removeClass('active');
+        $('#remove-zone').css('display', 'none');
     });
 
     getJsonData(`${API}/city-zone`).then((results) => {
         table.rows.add(results).draw();
     });
 });
+
+
+// create color box legend
+function createMapLegend(min, max) {
+    let step = 200 / (max - min + 1);
+
+    $('.map-legend').css('display', 'flex');
+
+    // set min max values to the map legend
+    $('.map-legend > .min').text(min);
+    $('.map-legend > .max').text(max);
+
+    ctx.clearRect(0, 0, colorBox.width, colorBox.height);
+
+    for(var i = min; i <= max; i++) {
+        ctx.beginPath();
+        
+        var color = calculateRedGreen(i, min, max);
+        ctx.fillStyle = color;
+        
+        ctx.fillRect((i - min) * step, 0, step, 25);
+    }
+}

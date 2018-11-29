@@ -36,7 +36,7 @@ FROM
               FROM
                 cena 
             )
-            AS cena,
+            AS price,
             (
               SELECT
                 level 

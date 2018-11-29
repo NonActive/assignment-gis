@@ -2,9 +2,20 @@
 
 const db = require('../db');
 
+const  CZK_TO_EUR = 0.039;
+
+function converCzkToEur(value) {
+    if (!isNaN(value))
+        return Math.floor((value * CZK_TO_EUR) * 100) / 100;
+    return value;
+}
+
 let getCityZonesOverview = ((req, res) => {
     db.GeodataRepository.getCityZonesOverview().then((results) => {
-        const data = results;
+        const data = results.map(o => {
+            o.price = converCzkToEur(o.price);
+            return o;
+        });
 
         return res.status(200).send(data)
     }).catch(err => {
@@ -48,7 +59,16 @@ let getPriceMap = ((req, res) => {
     const zoneId = req.params.id;
 
     db.GeodataRepository.getPriceMap(zoneId).then((results) => {
-        const data = results;
+        let data = results;
+
+        let features = data.features;
+        
+        data.features = features.map(o => {
+            o.properties.price = converCzkToEur(o.properties.price);
+            o.properties.min = converCzkToEur(o.properties.min);
+            o.properties.max = converCzkToEur(o.properties.max);
+            return o;
+        });
 
         return res.status(200).send(data)
     }).catch(err => {
@@ -65,10 +85,16 @@ let getPointInfo = ((req, res) => {
         if (!results['row_to_json'])
             return res.status(200).send(results)
 
-        data['point-info'] = results['row_to_json'];
+        let pointInfo = results['row_to_json'];
 
-        db.GeodataRepository.findParkingWithinDistance(point, 500).then(results => {
-            data['parking'] = results;
+        if (pointInfo.properties.price) {
+            pointInfo.properties.price = converCzkToEur(pointInfo.properties.price);
+        }
+
+        data['point-info'] = pointInfo;
+
+        db.GeodataRepository.findGreenAreasWithinDistance(point, 500).then(results => {
+            data['parks'] = results;
 
             return res.status(200).send(data);
         })

@@ -77,13 +77,13 @@ class GeodataRepository {
         });
     }
 
-    findParkingWithinDistance(point, distance) {
-        return sql.initQuery('find.parking', {
+    findGreenAreasWithinDistance(point, distance) {
+        return sql.initQuery('find.green.area', {
             lng: point[0],
             lat: point[1],
             distance
         }).then(query => {
-            return this.db.one(query)
+            return this.db.any(query)
         }).catch(err => {
             console.log('DB error: ', err);
             return err;
