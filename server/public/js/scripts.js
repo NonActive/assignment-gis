@@ -4,6 +4,7 @@ const API = 'http://localhost:3000/api';
 const OPENSTREETMAP_API = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const MAPBOX_API = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}'
 
+
 const mapOptions = {
     center: [50.08804, 14.42076],
     zoom: 10.5
@@ -62,6 +63,7 @@ for (var i = 0; i < toggleableLayerNames.length; i++) {
     link.textContent = layerName;
 
     link.onclick = function (e) {
+        console.log()
         let clickedLayer = layers[this.textContent];
 
         e.preventDefault();
@@ -73,13 +75,17 @@ for (var i = 0; i < toggleableLayerNames.length; i++) {
 
             $('.map-legend').css('display', 'none');
         } else {
-            addLayer(clickedLayer, this.textContent);
-            this.className = 'active';
+            if (!$('#menu > a').hasClass('active')) {
+                addLayer(clickedLayer, this.textContent);
+                this.className = 'active';
+            }
         }
     };
 
     var layersMenu = document.getElementById('menu');
     layersMenu.appendChild(link);
+
+   
 }
 
 function styleNoiseMap(feature) {
@@ -216,7 +222,7 @@ map.on('click', function (e) {
 
         let available;
         if (_.has(properties, 'zastavitelne')) {
-            available = properties.zastavitelne === 'zastavitelne' ? 'yes' : 'no';
+            available = properties.zastavitelne === 'zastavitelne' ? '<img src="img/success.svg" height="18" width="18" alt="not-available">' : '<img src="img/error.svg" height="18" width="18" alt="available">';
         }
 
         let price;
@@ -280,23 +286,14 @@ map.on('click', function (e) {
 
 
 function setMark(text, lat, lng) {
-    const properties = {
-        radius: 8.5,
-        fillColor: 'red',
-        color: "#000",
-        weight: 1,
-        opacity: 1,
-        fillOpacity: 0.8
-    };
-
-
-    let selectedPoint = L.circleMarker([lat, lng], properties).addTo(map);
-    // selectedPoint.bindTooltip(`${text}`, {
-    //     permanent: true,
-    //     direction: 'top'
-    // }).openPopup();
+    var redMarker = L.AwesomeMarkers.icon({
+        icon: 'home',
+        prefix: 'fa',
+        markerColor: 'red'
+      });
+          
+    let selectedPoint = L.marker([lat, lng], {icon: redMarker}).addTo(map);
     selectedPoint.bindPopup(`${text}`).openPopup();
-
 
     return selectedPoint;
 }
