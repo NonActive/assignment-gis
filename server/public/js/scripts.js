@@ -234,6 +234,11 @@ map.on('click', function (e) {
         if (_.has(properties, 'noise')) {
             noise = `${properties.noise} dB`;
         }
+
+        let airQuality;
+        if (_.has(properties, 'air_quality')) {
+            airQuality = `${properties.air_quality}`;
+        }
         
         let areas = '';
         if (results.parks && results.parks.length > 0) {
@@ -259,6 +264,7 @@ map.on('click', function (e) {
             `<b>Latitude:</b> ${lat} <br>` +
             `<b>Longitude: </b> ${lng}<br>` +
             `<b>Price for m&sup2;:</b> ${price} <br>` +
+            `<b>Air quality level:</b> ${airQuality} <br>` +
             `<b>Noise level:</b> ${noise} <br>` +
             `<b>Available:</b> ${available} <br>` + areas,
             lat, lng

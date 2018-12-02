@@ -82,7 +82,7 @@ class GeodataRepository {
             lng: point[0],
             lat: point[1],
             distance
-        }).then(query => {
+        }).then(query => {z
             return this.db.any(query)
         }).catch(err => {
             console.log('DB error: ', err);
