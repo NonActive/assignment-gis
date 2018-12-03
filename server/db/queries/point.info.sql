@@ -10,11 +10,11 @@ WITH cena AS
 noise_level AS 
 (
   SELECT
-    level 
+     AVG((db_lo + db_hi) / 2) AS level
   FROM
-    noise_level 
+    hlukova_mapa_den
   WHERE
-    ST_Contains( geom, st_geomfromtext('POINT(%lng% %lat%)', 4326) ) 
+    ST_Contains(geom, st_geomfromtext('POINT(%lng% %lat%)', 2263) ) 
 ),
 air_quality AS 
 (
@@ -47,7 +47,7 @@ FROM
             AS price,
             (
               SELECT
-                level 
+                 level
               FROM
                 noise_level 
             )

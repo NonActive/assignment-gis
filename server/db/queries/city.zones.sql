@@ -12,11 +12,11 @@ SELECT
   AS air_quality,
   (
     SELECT
-      round(AVG(nl.level), 2) 
+      round(AVG((nl.db_lo + nl.db_hi) / 2), 2) 
     FROM
-      noise_level AS nl 
+      hlukova_mapa_den AS nl 
     WHERE
-      ST_Intersects(mc.geom_new, nl.geom) 
+      ST_Intersects(mc.geom, nl.geom) 
   )
   AS noise_level,
   (
